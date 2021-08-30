@@ -1,2 +1,2 @@
 # ConeDetection
-Neural networks  training on cone dataset 
+This repo contains preprocessing and neural networks training code on cone dataset 
