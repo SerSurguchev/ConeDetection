@@ -32,7 +32,7 @@ def from_csv_to_txt(dir, data_fr_file):
 
 # Uncomment these lines
 if __name__ == '__main__':
-    # data_fr_file = pd.read_csv(cvs file path)
-    # dir = r'# path with cone images'
+    # data_fr_file = pd.read_csv(all.csv file path)
+    # dir = 'path to cone images folder'
     # from_csv_to_txt(dir=dir, data_fr_file=data_fr_file)
     pass
