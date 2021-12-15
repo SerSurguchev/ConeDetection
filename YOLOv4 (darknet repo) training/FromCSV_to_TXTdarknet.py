@@ -1,3 +1,4 @@
+# convert data from csv file https://github.com/SerSurguchev/ConeDetection/blob/main/YOLOv4%20(darknet%20repo)%20training/all.csv to YOLO darknet format
 import pandas as pd
 import glob
 
