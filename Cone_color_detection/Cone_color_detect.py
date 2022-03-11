@@ -45,6 +45,28 @@ def calc_brightness(im_file):
     r, g, b = stat.mean
     return math.sqrt(0.241 * (r ** 2) + 0.691 * (g ** 2) + 0.068 * (b ** 2))
 
+def pointIntoRectangle(boxes, x, y):
+
+    def product(Ax, Ay, Bx, By, Px, Py):
+        return (Bx - Ax) * (Py - Ay) - (By - Ay) * (Px - Ax)
+
+    check = False
+
+    # x, y, w, h
+    for box in boxes:
+        p1 = product(box[0], box[1], box[0], box[1] + box[3], x, y)
+        p2 = product(box[0], box[1] + box[3], box[0] + box[2], box[1] + box[3], x, y)
+        p3 = product(box[0] + box[2], box[1] + box[3], box[0] + box[2], box[1], x, y)
+        p4 = product(box[0] + box[2], box[1], box[0], box[1], x, y)
+
+        # point into rectangle
+        if ((p1 < 0 and p2 < 0 and p3 < 0 and p4 < 0) or
+                (p1 > 0 and p2 > 0 and p3 > 0 and p4 > 0)):
+            check = True
+            break
+
+    return check
+
 def get_bitwise(bitwise):
 
     height, width = bitwise.shape[:2]
@@ -139,6 +161,7 @@ def get_color(custom_bitwise, orig_bitwise, without_white_color,fallen):
     # 1 yellow cone
     # 2 red cone
     # 3 Unknown
+    # 4 big red cone
 
     # detect blue cone
 
@@ -165,10 +188,16 @@ def get_color(custom_bitwise, orig_bitwise, without_white_color,fallen):
         # detect fallen cones
         if fallen:
             return np.argmax([yellow, yr]) + 1
+        
+        # detect big red cone
+        elif possible_big_cone and check_cone_gradient(orig_bitwise=orig_bitwise) and yr > yellow:
+            return 4
 
         # detect yellow cone
         elif check_cone_gradient(orig_bitwise=orig_bitwise) or (check_cone_gradient(orig_bitwise=orig_bitwise) and yellow > yr):
             return 1
+        
+        # red cone
         else:
             # cv2.imshow(f'{str(round((b / or_sum), 4))}  {str(round((r_g / or_sum), 4))}', half_b)
             return 2
@@ -177,6 +206,7 @@ def main(final_arr, img_dir, output_dir):
     photo_ind = 0
     for dct in final_arr:
         for key, value in dct.items():
+            boxes = value
             txt_file = open(output_dir + key.split('.')[0] + '.txt', 'w')
             im = cv2.imread(img_dir + key)
             c_height, c_width = im.shape[:2]
@@ -185,6 +215,13 @@ def main(final_arr, img_dir, output_dir):
 
                 # don't detect too distant cone
                 if h < 25:
+                    continue
+                    
+                point_check1 = pointIntoRectangle(boxes=boxes, x=x, y=y + h)
+                point_check2 = pointIntoRectangle(boxes=boxes, x=x + w, y=y + h)
+                
+                if point_check1 or point_check2:
+#                     cv2.rectangle(im, (x, y), (x + w, y + h), (255, 0, 255), thickness=1)
                     continue
 
                 # create cone rectangle with black pixels around the edges
@@ -219,6 +256,10 @@ def main(final_arr, img_dir, output_dir):
                 if h < w:
                     fallen = True
                     # cv2.rectangle(im, (x, y), (x + w, y + h), (255, 0, 0), thickness=2)
+                    
+                possible_big_cone = False
+                if h > w:
+                    possible_big_cone = True
 
                 # cone color detect
                 color_ind = get_color(custom_bitwise, orig_bitwise, without_white_color, fallen)
@@ -232,9 +273,9 @@ def main(final_arr, img_dir, output_dir):
                 os.remove(output_dir + key.split('.')[0] + '.txt')
                 os.remove(output_dir + key)
 
-#             cv2.imshow(f'{photo_ind}', im)
-#             cv2.waitKey(0)
-#             cv2.destroyAllWindows()
+            cv2.imshow(f'{photo_ind}', im)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 #             cv2.imwrite(r"C:\Users/Sergey/PycharmProjects/tensorEnv/Formula/" + key, im)
 
         photo_ind += 1
