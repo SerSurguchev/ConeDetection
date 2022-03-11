@@ -37,4 +37,12 @@ FromCSV_to_TXTdarknet.py
 Yolov4_grayscale_images_train.ipynb
   
 Подготовка к обучению модели по туториалу https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects + обучение на GPU Google Colab. 
-  
+
+
+# Обучение нейросети Faster - RCNN
+Источники:
+1) Detectron2 Docs https://detectron2.readthedocs.io/en/latest/index.html#
+2) Roboflow article https://blog.roboflow.com/how-to-train-detectron2/
+
+
+![alt text](https://miro.medium.com/max/444/1*wleaRUAKGGwxe3YMcKWRbA.png)
