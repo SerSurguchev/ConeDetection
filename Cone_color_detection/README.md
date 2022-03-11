@@ -7,7 +7,8 @@
 4) Большой красный конус
 5) Неизвестный конус (который не принадлежит ни одному из перечисленных выше или который не удалось чётко классифицировать)
 
-![alt text](https://prnt.sc/mq_5Y2tHTKVs)
+
+![загрузка](https://user-images.githubusercontent.com/71214107/157867803-00b3b83e-35c1-4bf5-95b3-2ab447e43ce4.png)
 
 Some examples of results can be seen in the attached images.
 
