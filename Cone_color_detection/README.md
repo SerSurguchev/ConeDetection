@@ -1,4 +1,14 @@
-Сode that detects the cones by color and writes their labels to a txt file for further training using a neural network.
+Код, который классицирует конуса по цвету на фотографиях, для дальнейшего обучения датасета из конусов на нескольких классов
+
+5 классов:
+1) Синий конус
+2) Оранжевый конус
+3) Красный конус
+4) Большой красный конус
+5) Неизвестный конус (который не принадлежит ни одному из перечисленных выше или который не удалось чётко классифицировать)
+
+![alt text](https://prnt.sc/mq_5Y2tHTKVs)
+
 Some examples of results can be seen in the attached images.
 
 Libraries: OpenCV, Pillow, NumPY
