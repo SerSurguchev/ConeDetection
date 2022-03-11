@@ -1,4 +1,4 @@
-# ConeDetection
-This repo contains preprocessing and neural networks training code on cone dataset. 
+# Аннотация
+Целью этого проекта является подготовка данных для обучения и само обучение архитектур нейронных сетей (YOLOv4 darknet, Faster-RCNN Detectron2) на предмет распознавания конусов на гоночной трассе.  
 
-Dataset available here: https://github.com/cv-core/MIT-Driverless-CV-TrainingInfra/tree/master/CVC-YOLOv3
+Сам датасет и координаты Bounding Box к нему доступны в репозитории MIT: https://github.com/cv-core/MIT-Driverless-CV-TrainingInfra/tree/master/CVC-YOLOv3
