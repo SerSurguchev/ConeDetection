@@ -46,7 +46,7 @@ Yolov4_grayscale_images_train.ipynb
 
 Convert_from_txtDarknet_to_json_format.ipynb
 
-Перевод координатBonding Box из формата 
+Перевод координат Bonding Box из формата 
 
 YOLO format 
 
@@ -62,5 +62,5 @@ YOLO format
 
 Faster_R-CNN_Detectron2.ipynb
 
-Обучение модели и тестирование на полученных в ходе обучения весах
+Обучение модели и тестирование на полученных в ходе обучения весах.
 
