@@ -14,15 +14,15 @@ FromCSV_to_TXTdarknet.py
 
 Где:
  
- <object-class> = метка класса. Класс в данном коде один: 'Cone'
+    <object-class> = метка класса. Класс в данном коде один: 'Cone'
  
-<x_center> = ((<absolute_x> + <absolute_width>)/2)/ <image_width>
+    <x_center> = ((<absolute_x> + <absolute_width>)/2)/ <image_width>
  
-<y_center> = ((<absolute_y> + <absolute_height>)/2)/ <image_height>
+    <y_center> = ((<absolute_y> + <absolute_height>)/2)/ <image_height>
  
-<height> = <absolute_height> / <image_height>
+    <height> = <absolute_height> / <image_height>
  
-<width> = <absolute_width> / <image_width>
+    <width> = <absolute_width> / <image_width>
   
 Пример:
 1 0.716797 0.395833 0.216406 0.147222
