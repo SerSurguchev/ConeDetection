@@ -10,6 +10,6 @@
 
 ![загрузка](https://user-images.githubusercontent.com/71214107/157867803-00b3b83e-35c1-4bf5-95b3-2ab447e43ce4.png)
 
-Some examples of results can be seen in the attached images.
+Работу кода можно посмотреть в изображениях, загруженных в репозиторий.
 
-Libraries: OpenCV, Pillow, NumPY
+Используемые библиотеки: OpenCV, Pillow, NumPY
