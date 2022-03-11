@@ -6,7 +6,7 @@
 
 Convert_from_txtDarknet_to_json_format.ipynb
 
-Перевод координатBonding Box из формата 
+Перевод координат Bonding Box из формата 
 
 YOLO format 
 
