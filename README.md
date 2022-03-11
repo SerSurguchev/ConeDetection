@@ -10,7 +10,8 @@ FromCSV_to_TXTdarknet.py
 Скрипт для перевода координат BB из файла all.csv в .txt файлы с для каждого .jpg изображения.
 
 Содержание текстового файла:
-<object-class> <x_center> <y_center> <width> <height>
+
+    <object-class> <x_center> <y_center> <width> <height>
 
 Где:
  
