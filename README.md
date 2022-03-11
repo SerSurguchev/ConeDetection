@@ -33,7 +33,8 @@ FromCSV_to_TXTdarknet.py
   
   1 0.420312 0.395833 0.140625 0.166667
 
+
 Yolov4_grayscale_images_train.ipynb
   
-Подготовка к обучению модели по туториалу https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects и само обучение на GPU Google Colab. 
+Подготовка к обучению модели по туториалу https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects + обучение на GPU Google Colab. 
   
