@@ -14,7 +14,7 @@ FromCSV_to_TXTdarknet.py
 
 Где:
  
-<object-class> = метка класса. Класс в данном коде один: 'Cone'
+         <object-class> = метка класса. Класс в данном коде один: 'Cone'
  
 <x_center> = ((<absolute_x> + <absolute_width>)/2)/ <image_width>
  
