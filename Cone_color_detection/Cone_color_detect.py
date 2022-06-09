@@ -137,22 +137,6 @@ def check_cone_gradient(orig_bitwise):
         mean = np.mean(lst, axis=0)
         grad_array[ind] = mean
 
-    # show cone, half cone and plot hist
-    # root = tk.Tk()
-    # pil_image = cv2.cvtColor(orig_bitwise, cv2.COLOR_BGR2RGB)
-    # tkimage = ImageTk.PhotoImage(Image.fromarray(pil_image))
-    # tkimage2 = ImageTk.PhotoImage(Image.fromarray(half))
-    # tkimage3 = ImageTk.PhotoImage(Image.fromarray(reverse))
-    #
-    # tk.Label(root, image=tkimage2).pack()
-    # tk.Label(root, image=tkimage).pack()
-    # tk.Label(root, image=tkimage3).pack()
-    # root.mainloop()
-
-    # fig, ax = plt.subplots()
-    # ax.plot(reverse)
-    # plt.show()
-
     return brightness_change(grad_array[:len(grad_array)//2])
 
 def get_color(custom_bitwise, orig_bitwise, without_white_color,fallen):
