@@ -5,40 +5,8 @@ import glob
 import os
 import math
 from PIL import Image, ImageEnhance, ImageStat, ImageTk
-import tkinter as tk
 import matplotlib.pyplot as plt
-
-def classes_convert(data_fr_file, img_dir):
-
-    lens = len(glob.glob(img_dir + '*.jpg'))
-    final_arr = []
-
-    for i in range(4028, lens):
-        j = 5
-        name_of_file = data_fr_file.iloc[i, 0]
-        name_of_file = name_of_file[:-3] + "txt"
-        without = name_of_file.split('.')[0] + '.jpg'
-
-        dct = {}
-        coords = []
-
-        while True:
-
-            mark1 = data_fr_file.iloc[i, j]
-            if pd.isna(mark1):
-                break
-
-            mark1 = str(mark1)
-            mark1 = mark1[1:-1]
-            mark = mark1.replace(',', '')
-            x, y, h, w = mark.split()
-            coords.append([int(x), int(y), int(w), int(h)])
-            j += 1
-
-        dct[without] = coords
-        final_arr.append(dct)
-
-    return final_arr
+import ast
 
 def calc_brightness(im_file):
     stat = ImageStat.Stat(im_file)
@@ -67,6 +35,28 @@ def pointIntoRectangle(boxes, x, y):
 
     return check
 
+# def checkOverlap(bboxes):
+#
+#     def pointIntoCircle(R, Xc, Yc, X1, Y1, X2, Y2):
+#
+#         # Find the nearest point on the
+#         # rectangle to the center of
+#         # the circle
+#         Xn = max(X1, min(Xc, X2))
+#         Yn = max(Y1, min(Yc, Y2))
+#
+#         Dx = Xn - Xc
+#         Dy = Yn - Yc
+#
+#         return (Dx**2 + Dy**2) <= R**2
+#
+#     for x, y, h, w in bboxes:
+#
+#         if pointIntoCircle(w//2, (x + x + w)//2, (y + y + h)//2, x, (y + h),  (x + w), y):
+#             return True
+#
+#     return False
+
 def get_bitwise(bitwise):
 
     height, width = bitwise.shape[:2]
@@ -89,16 +79,6 @@ def get_bitwise(bitwise):
 
     return bitwise
 
-def remove_whiteHLS(orig_bitwise, sensitivity):
-
-    imageHLS = cv2.cvtColor(orig_bitwise, cv2.COLOR_BGR2HLS)
-    mask = cv2.inRange(imageHLS, np.array([0, 255 - sensitivity, 0]), np.array([255, 255, 255]))
-    mask = 255 - mask
-
-    without_white = cv2.bitwise_and(orig_bitwise, orig_bitwise, mask=mask)
-
-    return without_white
-
 def remove_white_naive(orig_bitwise, threshold):
 
     height, width = orig_bitwise.shape[:2]
@@ -120,10 +100,6 @@ def brightness_change(grad_array):
         else:
             decrease.append(abs(grad_array[i] - grad_array[i-1]))
 
-    # print(len(increase) + len(decrease))
-    # print('increase: ', increase)
-    # print('decrease: ', decrease)
-
     return sum(increase) >= sum(decrease)
 
 def check_cone_gradient(orig_bitwise):
@@ -139,83 +115,124 @@ def check_cone_gradient(orig_bitwise):
 
     return brightness_change(grad_array[:len(grad_array)//2])
 
-def get_color(custom_bitwise, orig_bitwise, without_white_color,fallen):
 
-    # 0 blue cone
-    # 1 yellow cone
-    # 2 red cone
-    # 3 Unknown
-    # 4 big red cone
+def get_color(orig_bitwise, fallen, possible_big_cone):
 
-    # detect blue cone
+    # 0 black middle
+    # 1 white middle
+    # 2 unknown
 
-    half_b = without_white_color[round(without_white_color.shape[0]/2):, :]
+    gray_bitwise = cv2.cvtColor(orig_bitwise, cv2.COLOR_BGR2GRAY)
+    bitwise_center = gray_bitwise.item(round(gray_bitwise.shape[0] / 2), round(gray_bitwise.shape[1] / 2))
+    half_b = orig_bitwise[round(orig_bitwise.shape[0]/2):, :]
+
     b = (np.sum(half_b[:, :, 0]))
     r_g = (np.sum(half_b[:, :, 2]) + np.sum(half_b[:, :, 1])) / 2
     or_sum = (b + r_g) / 100
 
-    if (np.sum(half_b[:, :, 0])) > (np.sum(half_b[:, :, 2]) + np.sum(half_b[:, :, 1])) / 2:
-        return 0
-
-    # if the percentage is ambiguous, return 3 (unknown class)
-
-    if abs((b/or_sum) - (r_g/or_sum)) < 10:
-        return 3
+    # detect blue cone (class 1 white)
+    if b > r_g and (np.sum(half_b[:, :, 0])) / (np.sum(half_b[:, :, 2])) > 0.7:
+        return 1
 
     # detect yellow and red cone
     else:
+        custom_bitwise = get_bitwise(bitwise)
         yellow = np.sum(custom_bitwise[:, :, 1])
         yr = np.sum(custom_bitwise[:, :, 2])
 
-        a = (yellow + yr) / 100
+        if fallen:
 
         # detect fallen cones
-        if fallen:
-            return np.argmax([yellow, yr]) + 1
-        
-        # detect big red cone
-        elif possible_big_cone and check_cone_gradient(orig_bitwise=orig_bitwise) and yr > yellow:
-            return 4
+            return 2 if yr/yellow > 2 else 0
 
-        # detect yellow cone
-        elif check_cone_gradient(orig_bitwise=orig_bitwise) or (check_cone_gradient(orig_bitwise=orig_bitwise) and yellow > yr):
-            return 1
-        
-        # red cone
-        else:
-            # cv2.imshow(f'{str(round((b / or_sum), 4))}  {str(round((r_g / or_sum), 4))}', half_b)
+        elif possible_big_cone and yr/yellow > 5:
             return 2
 
-def main(final_arr, img_dir, output_dir):
-    photo_ind = 0
-    for dct in final_arr:
-        for key, value in dct.items():
-            boxes = value
-            txt_file = open(output_dir + key.split('.')[0] + '.txt', 'w')
-            im = cv2.imread(img_dir + key)
-            c_height, c_width = im.shape[:2]
+        # detect big orange cone (unknown class)
+        elif check_cone_gradient(orig_bitwise=orig_bitwise)\
+                and (yellow/yr < 0.7 or yr/yellow > 3):
 
-            for x, y, w, h, in value:
+            return 2
 
-                # don't detect too distant cone
-                if h < 25:
-                    continue
-                    
-                point_check1 = pointIntoRectangle(boxes=boxes, x=x, y=y + h)
-                point_check2 = pointIntoRectangle(boxes=boxes, x=x + w, y=y + h)
-                
-                if point_check1 or point_check2:
-#                     cv2.rectangle(im, (x, y), (x + w, y + h), (255, 0, 255), thickness=1)
-                    continue
+        # detect yellow cone (class 0)
+        elif check_cone_gradient(orig_bitwise=orig_bitwise) \
+                and yellow/yr >= 0.7:
+
+            # print('black', yellow/yr)
+            return 0
+
+        # detect red cone
+        else:
+
+            # cv2.imshow(f'{str(round((yellow/yr), 4))}  {str(round((yr/yellow), 4))}', orig_bitwise)
+            return 1
+
+if __name__ == '__main__':
+
+    data_fr_file = pd.read_csv('/home/sergey/from_wind/programming/Computer_vision/all.csv')
+    dir = r'/home/sergey/from_wind/programming/Computer_vision/YOLO_Dataset/'
+    output_dir = '/home/sergey/from_wind/programming/Computer_vision/dataset_grayscale/'
+
+    lens = len(glob.glob(dir + '*.jpg'))
+
+    if os.path.isdir(output_dir) == False:
+        print(output_dir, 'created')
+        os.makedirs(output_dir)
+
+    for i in range(1, lens):
+
+        j = 5
+
+        name_of_image = data_fr_file.iloc[i, 0]
+
+        image = cv2.imread(dir + name_of_image)
+
+        c_height, c_width = image.shape[:2]
+
+        name_of_file = name_of_image[:-3] + "txt"
+
+        file1 = open(output_dir + 'gray_' + name_of_file, 'w')
+
+        mask = pd.DataFrame(data_fr_file.iloc[i, j:]).dropna()
+        bboxes = []
+        for index, row in mask.iterrows():
+            h = ast.literal_eval(row[i])[2]
+            if h > 25:
+                bboxes.append(ast.literal_eval(row[i]))
+
+        bboxes = sorted(bboxes, key=lambda x: x[2], reverse=True)
+
+        while True:
+
+            mark1 = data_fr_file.iloc[i, j]
+
+            if pd.isna(mark1):
+                break
+
+            mark1 = str(mark1)
+            mark1 = mark1[1:-1]
+            mark = mark1.replace(',', '')
+
+            x, y, h, w = mark.split()
+            x, y, h, w = map(int, [x, y, h, w])
+
+            if h > 25:
+
+                # check_point1 = pointIntoRectangle(bboxes, x=x, y=y + h)
+                # check_point2 = pointIntoRectangle(bboxes, x=x + w, y=y + h)
+
+                # if check_point1 or check_point2:
+                #     # cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 0), 2)
+                #     j += 1
+                #     continue
 
                 # create cone rectangle with black pixels around the edges
-
                 cx = round((x + x + w) / 2)
                 lst = []
                 lst.append([cx - x, 0])
                 lst.append([0, h])
                 lst.append([w, h])
-                cone = im[y:y + h, x:x + w]
+                cone = image[y:y + h, x:x + w]
                 mask = cv2.fillPoly(np.zeros((h, w), dtype=np.uint8), [np.asarray(lst)], (255, 255, 255))
                 bitwise = cv2.bitwise_and(cone, cone, mask=mask)
 
@@ -224,54 +241,43 @@ def main(final_arr, img_dir, output_dir):
 
                 # calculate cone brightness and if it is toо bright, pass this cone
                 avr_brightness = calc_brightness(Image.fromarray(cv2.cvtColor(cone, cv2.COLOR_BGR2RGB)))
-                if int(avr_brightness) > 180:
-                    print('Cone not detected')
-                    continue
 
-                # create custom color bitwise
-                custom_bitwise = get_bitwise(bitwise)
+                if int(avr_brightness) < 180:
 
-                # remove bright white color
-                # without_white_color = remove_whiteHLS(orig_bitwise.copy(), sensitivity=15)
-                without_white_color = remove_white_naive(orig_bitwise.copy(), threshold=200)
+                    x_norm = round((float(x) + float(w) / 2) / float(c_width), 6)
+                    y_norm = round((float(y) + float(h) / 2) / float(c_height), 6)
+                    h_norm = round(float(h) / float(c_height), 6)
+                    w_norm = round(float(w) / float(c_width), 6)
 
-                # checking whether the cone has fallen
-                fallen = False
-                if h < w:
-                    fallen = True
-                    # cv2.rectangle(im, (x, y), (x + w, y + h), (255, 0, 0), thickness=2)
-                    
-                possible_big_cone = False
-                if h > w:
-                    possible_big_cone = True
+                    fallen = False
 
-                # cone color detect
-                color_ind = get_color(custom_bitwise, orig_bitwise, without_white_color, fallen)
+                    if h < w:
+                        fallen = True
 
-#                 cv2.putText(im, str(color_ind), (cx, int(y) - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 1)
+                    possible_big_cone = False
 
-            txt_file.close()
+                    if h > 1.8 * w:
+                        possible_big_cone = True
 
-            # don't save txt file without labels and photo without cones
-            if os.path.getsize(output_dir + key.split('.')[0] + '.txt') == 0:
-                os.remove(output_dir + key.split('.')[0] + '.txt')
-                os.remove(output_dir + key)
+                    # detect red cone on video contains only red cone (1 class)
 
-            cv2.imshow(f'{photo_ind}', im)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-#             cv2.imwrite(r"C:\Users/Sergey/PycharmProjects/tensorEnv/Formula/" + key, im)
+                    if c_height == 1080 and c_width == 1920:
+                        color_ind = 2 if check_cone_gradient(orig_bitwise) else 1
 
-        photo_ind += 1
+                    else:
+                        color_ind = get_color(orig_bitwise, fallen, possible_big_cone)
 
-if __name__ == '__main__':
-    data_fr_file = pd.read_csv('C:\For programming\Computer vision/all.csv')
-    dir = r'C:\For programming\Computer vision/YOLO_Dataset/'
-    output_dir = r'C:\For programming\Computer vision/dataset_grayscale/'
-    final_arr = classes_convert(data_fr_file, dir)
-    main(final_arr, dir, output_dir)
+                    # write labels in .txt file
+                    file1.write(f"{color_ind} {x_norm} {y_norm} {w_norm} {h_norm}\n")
 
-    # check whether number of photos is equal to the number of labels
-    print(len(glob.glob(output_dir + '*.jpg')))
-    print(len(glob.glob(output_dir + '*.txt')))
+                    # cv2.rectangle(image, (x, y), (x + w, y + h), (0,255,255), 2)
+                    # cv2.putText(image, str(color_ind), (cx, y - 5), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2)
 
+            j += 1
+
+        file1.close()
+        cv2.imwrite(output_dir + 'gray_' + name_of_image, cv2.cvtColor(image, cv2.COLOR_BGR2GRAY))
+
+    #     cv2.imshow('frame', image)
+    #     cv2.waitKey(0)
+    # cv2.destroyAllWindows()
