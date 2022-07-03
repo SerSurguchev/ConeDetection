@@ -68,7 +68,7 @@ def create_cone_rectangle(x, y, h, w, cone):
     return bitwise
 
 def get_bitwise(bitwise):
-    
+
     '''
     :param bitwise: (ndarray): Cone rectangle with black pixels around the edges
     :return: (ndarray): Cone rectangle with custom color space (red, yellow, blue)
@@ -130,22 +130,22 @@ def check_cone_gradient(orig_bitwise):
 
     return brightness_change(grad_array[:len(grad_array)//2])
 
-def get_color(orig_bitwise, fallen, possible_big_cone):
-    
+def get_color(triangle, fallen, possible_big_cone):
+
     '''
-    Detect cone class: 
+    Detect cone class:
     0 black middle
     1 white middle
     2 unknown
-    
-    :param orig_bitwise: (ndarray): Cone rectangle with black pixels around the edges
+
+    :param triangle: (ndarray): Cone rectangle with black pixels around the edges
     :param fallen: (boolean): True if cone is fallen (box width greater than height)
-    :param possible_big_cone: (boolean) 
+    :param possible_big_cone: (boolean)
     :return: (int): cone class
     '''
 
-    gray_bitwise = cv2.cvtColor(orig_bitwise, cv2.COLOR_BGR2GRAY)
-    half_b = orig_bitwise[round(orig_bitwise.shape[0]/2):, :]
+    gray_bitwise = cv2.cvtColor(triangle, cv2.COLOR_BGR2GRAY)
+    half_b = triangle[round(triangle.shape[0]/2):, :]
     # bitwise_center = gray_bitwise.item(round(gray_bitwise.shape[0] / 2), round(gray_bitwise.shape[1] / 2))
 
     b = (np.sum(half_b[:, :, 0]))
@@ -158,7 +158,7 @@ def get_color(orig_bitwise, fallen, possible_big_cone):
 
     # Detect yellow and red cone
     else:
-        custom_bitwise = get_bitwise(bitwise)
+        custom_bitwise = get_bitwise(triangle)
         yellow = np.sum(custom_bitwise[:, :, 1])
         yr = np.sum(custom_bitwise[:, :, 2])
 
@@ -171,12 +171,12 @@ def get_color(orig_bitwise, fallen, possible_big_cone):
             return 2
 
         # Detect big orange cone (second unknown class)
-        elif check_cone_gradient(orig_bitwise=orig_bitwise) and \
+        elif check_cone_gradient(orig_bitwise=triangle) and \
                 (yellow/yr < 0.7 or yr/yellow > 3):
             return 2
 
         # Detect yellow cone (zero class)
-        elif check_cone_gradient(orig_bitwise=orig_bitwise) and \
+        elif check_cone_gradient(orig_bitwise=triangle) and \
                 yellow/yr >= 0.7:
             return 0
 
@@ -240,10 +240,7 @@ if __name__ == '__main__':
 
                 # Сreate cone rectangle with black pixels around the edges
                 cone = image[y:y + h, x:x + w]
-                bitwise = create_cone_rectangle(x, y, h, w, cone)
-
-                # Leave copy of original bitwise
-                orig_bitwise = bitwise.copy()
+                triangle = create_cone_rectangle(x, y, h, w, cone)
 
                 # Calculate cone brightness and if it is toо bright, pass this cone
                 avr_brightness = calc_brightness(Image.fromarray(cv2.cvtColor(cone, cv2.COLOR_BGR2RGB)))
@@ -268,10 +265,10 @@ if __name__ == '__main__':
                         if w > h:
                             color_ind = 1
                         else:
-                            color_ind = 2 if check_cone_gradient(orig_bitwise) else 1
+                            color_ind = 2 if check_cone_gradient(triangle.copy()) else 1
 
                     else:
-                        color_ind = get_color(orig_bitwise, fallen, possible_big_cone)
+                        color_ind = get_color(triangle.copy(), fallen, possible_big_cone)
 
                     # Write labels in .txt file
                     file1.write(f"{color_ind} {x_norm} {y_norm} {w_norm} {h_norm}\n")
