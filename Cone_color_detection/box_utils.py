@@ -8,7 +8,7 @@ def yolo_to_pascal_voc(boxes, h_image, w_image):
     """
     Change bouning box annotaion from yolo format to pascal_voc format
     :param boxes: (ndarray): Numpy array containing bounding boxes are represented in the format
-    normalized [x_center, y_center, width, height]
+     normalized [x_center, y_center, width, height]
     :param h_image: (int): Height of numpy image
     :param w_image: (int): Width of numpy image
     :return: Numpy array containing bounding boxes in pascal_voc format [x_min, y_min, x_max, y_max]
