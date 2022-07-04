@@ -11,6 +11,12 @@
 
 Используемые библиотеки: OpenCV, Pillow, NumPY, Pandas
 
+Планируется:
+1) Написать код по аугментации данных и пересчёта координат ограничивающих рамок.
+Сделано: 
+1.1) ![Horizontal flip](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L12)
+1.2) ![Image Scaling](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L44)
+
 # Результаты 
 ![vid_37_frame_255](https://user-images.githubusercontent.com/71214107/177032350-b062fae3-ac8e-44e1-bb8d-92d0af469343.jpg)
 ![vid_38_frame_797](https://user-images.githubusercontent.com/71214107/177032353-f3a96aa4-942a-4692-a173-2902cce7f91e.jpg)
