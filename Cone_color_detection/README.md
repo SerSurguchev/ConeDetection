@@ -14,6 +14,7 @@
 Планируется:
 1) Написать код по аугментации данных и пересчёта координат ограничивающих рамок.
 Сделано: 
+
 1.1) ![Horizontal flip](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L12)
 1.2) ![Image Scaling](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L44)
 
