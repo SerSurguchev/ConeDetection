@@ -10,6 +10,13 @@ import ast
 
 
 def calc_brightness(im_file):
+    
+    """
+    Calculate cone brightness
+    :param im_file: (ndarray) Numpy array containing cropped cone from image
+    :return: (float): Image brightness
+    """
+    
     stat = ImageStat.Stat(im_file)
     r, g, b = stat.mean
     return math.sqrt(0.241 * (r ** 2) + 0.691 * (g ** 2) + 0.068 * (b ** 2))
@@ -17,12 +24,12 @@ def calc_brightness(im_file):
 
 def point_into_rectangle(boxes, x, y):
     
-    '''
+    """
     :param boxes: (list of lists): Coordinates of all boxes on image
     :param x: (int): x point coordinate
     :param y: (int): y point coordinate
     :return: (boolean): True if point into other bounding box else False
-    '''
+    """
 
     def product(Ax, Ay,
                 Bx, By,
@@ -48,7 +55,7 @@ def point_into_rectangle(boxes, x, y):
 
 def create_cone_rectangle(x, y, h, w, cone):
     
-    '''
+    """
     Сreate cone rectangle with black pixels around the edges
     :param x: (int): x point coordinate (left down)
     :param y: (int): y point coordinate (left down)
@@ -56,7 +63,7 @@ def create_cone_rectangle(x, y, h, w, cone):
     :param w: (int): Width of bounding box
     :param cone: (ndarray): Cropped cone image from a whole frame
     :return: (ndarray): Cone rectangle with black pixels around the edges
-    '''
+    """
 
     cx = round((x + x + w) / 2)
 
@@ -73,10 +80,10 @@ def create_cone_rectangle(x, y, h, w, cone):
 
 def get_bitwise(bitwise):
     
-    '''
+    """
     :param bitwise: (ndarray): Numpy image containing cone rectangle with black pixels around the edges
     :return: (ndarray): Cone rectangle with custom color space (red, yellow, blue)
-    '''
+    """
 
     height, width = bitwise.shape[:2]
 
