@@ -10,20 +10,18 @@ import ast
 
 
 def calc_brightness(im_file):
-    
     """
     Calculate cone brightness
     :param im_file: (ndarray) Numpy array containing cropped cone from image
     :return: (float): Image brightness
     """
-    
+
     stat = ImageStat.Stat(im_file)
     r, g, b = stat.mean
     return math.sqrt(0.241 * (r ** 2) + 0.691 * (g ** 2) + 0.068 * (b ** 2))
 
 
 def point_into_rectangle(boxes, x, y):
-    
     """
     :param boxes: (list of lists): Coordinates of all boxes on image
     :param x: (int): x point coordinate
@@ -54,7 +52,6 @@ def point_into_rectangle(boxes, x, y):
 
 
 def create_cone_rectangle(x, y, h, w, cone):
-    
     """
     Сreate cone rectangle with black pixels around the edges
     :param x: (int): x point coordinate (left down)
@@ -79,7 +76,6 @@ def create_cone_rectangle(x, y, h, w, cone):
 
 
 def get_bitwise(bitwise):
-    
     """
     :param bitwise: (ndarray): Numpy image containing cone rectangle with black pixels around the edges
     :return: (ndarray): Cone rectangle with custom color space (red, yellow, blue)
@@ -107,7 +103,6 @@ def get_bitwise(bitwise):
 
 
 def remove_white_naive(triangle, threshold):
-    
     """
     Removing very bright pixels, for example, pixels under sunlight reflection ect
 
@@ -115,7 +110,7 @@ def remove_white_naive(triangle, threshold):
     :param threshold: (int): The pixel above this threshold become zero
     :return: (ndarray): Numpy array without very bright pixels
     """
-    
+
     height, width = triangle.shape[:2]
 
     for row in range(height):
@@ -152,7 +147,6 @@ def check_cone_gradient(orig_bitwise):
 
 
 def get_color(triangle, fallen, possible_big_cone):
-    
     """
     Detect cone class:
     0 black middle
@@ -207,7 +201,6 @@ def get_color(triangle, fallen, possible_big_cone):
 
 
 def main(data_fr_file, dir, output_dir):
-    
     """
     Main Function
     :param data_fr_file: (string): Path to csv file with bounding box coordinates
@@ -220,7 +213,7 @@ def main(data_fr_file, dir, output_dir):
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    for i in range(6102, lens):
+    for i in range(1, lens):
 
         j = 5
         name_of_image = data_fr_file.iloc[i, 0]
