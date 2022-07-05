@@ -31,12 +31,12 @@ class Horizontalflip:
         img_center = np.hstack((img_center, img_center))
 
         image = image[:, ::-1, :]
-        bounding_boxes[:, [0, 2]] += 2 * (img_center[[0, 2]] - bounding_boxes[:, [0, 2]])
+        bounding_boxes[:, [1, 3]] += 2 * (img_center[[0, 2]] - bounding_boxes[:, [1, 3]])
 
-        box_w = abs(bounding_boxes[:, 0] - bounding_boxes[:, 2])
+        box_w = abs(bounding_boxes[:, 1] - bounding_boxes[:, 3])
 
-        bounding_boxes[:, 0] = bounding_boxes[:, 0] - box_w
-        bounding_boxes[:, 2] = bounding_boxes[:, 2] + box_w
+        bounding_boxes[:, 1] = bounding_boxes[:, 1] - box_w
+        bounding_boxes[:, 3] = bounding_boxes[:, 3] + box_w
 
         return image, bounding_boxes
 
