@@ -24,7 +24,7 @@ class Horizontalflip:
         format [x_min, y_min, x_max, y_max]
 
         returns: (ndarray): Flipped image in the numpy format
-        (ndarray): Transfromed number of bounding boxes and 4 represents `x1,y1,x2,y2` of the box
+        (ndarray): Transfromed number of bounding boxes and 5 represents [label, x_min, y_min, x_max, y_max] of the box
         """
 
         img_center = np.array(img.shape[:2])[::-1] / 2
@@ -43,15 +43,13 @@ class Horizontalflip:
 
 class ScaleImage:
     """
-    Scales the image
+    Image scaling
 
     Bounding boxes which have an area of less than 50% in the remaining in the
     transformed image is dropped. The resolution is maintained.
 
     :param scale_x: (float): The factor by which the image is scaled horizontally
     :param scale_y: (float): The factor by which the image is scaled vertically
-    returns: (ndarray): Scaled image as numpy array
-    (ndarray): Transfromed number of bounding boxes and 4 represents `x1,y1,x2,y2` of the box
     """
 
     def __init__(self, scale_x=-0.05, scale_y=-0.05):
@@ -62,10 +60,10 @@ class ScaleImage:
         """
         :param image: (ndarraay): Numpy image
         :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
-        format [x_min, y_min, x_max, y_max]
+        format [label, x_min, y_min, x_max, y_max]
 
         returns: (ndarray): Scaled image in the numpy format
-        (ndarray): Transfromed number of bounding boxes and 4 represents `x1,y1,x2,y2` of the box
+        (ndarray): Transfromed number of bounding boxes and 5 represents [label, x_min, y_min, x_max, y_max] of the box
         """
 
         img_shape = image.shape
@@ -89,7 +87,7 @@ class ScaleImage:
         labels = np.array([bounding_boxes[:, 0]]).reshape(-1, 1)
 
         bounding_boxes = clip_box(bounding_boxes[:, 1:5], [0, 0, img_shape[1],
-                                                   img_shape[0]], area_less)
+                                                           img_shape[0]], area_less)
 
         bounding_boxes = np.concatenate((labels[:len(bounding_boxes)],
                                          bounding_boxes[:, :4]), axis=1)
@@ -100,6 +98,12 @@ class ScaleImage:
 class TranslateImage:
     """
     Randomly translate image
+    
+    Bounding boxes which have an area of less than 50% in the remaining in the
+    transformed image is dropped. The resolution is maintained.
+
+    :param scale_x: (float): The factor by which the image is translated horizontally
+    :param scale_y: (float): The factor by which the image is translated vertically
     """
 
     def __init__(self, translate_x=0.15, translate_y=0.15):
@@ -113,6 +117,15 @@ class TranslateImage:
                and self.translate_y < 1, 'Traslate factor must be between 0 and 1'
 
     def __call__(self, image, bounding_boxes, area_less=0.5):
+        """
+        :param image: (ndarraay): Numpy image
+        :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
+        format [label, x_min, y_min, x_max, y_max]
+
+        returns: (ndarray): Translated image in the numpy format
+        (ndarray): Transfromed number of bounding boxes and 5 represents [label, x_min, y_min, x_max, y_max] of the box
+        """
+
         img_shape = image.shape
 
         translate_factor_x = self.translate_x
@@ -130,7 +143,7 @@ class TranslateImage:
                      min(img_shape[1], img_shape[1] + corner_x)]
 
         mask = image[max(-corner_y, 0):min(img_shape[0], -corner_y + img_shape[0]),
-                     max(-corner_x, 0):min(img_shape[1], -corner_x + img_shape[1]), :]
+               max(-corner_x, 0):min(img_shape[1], -corner_x + img_shape[1]), :]
 
         canvas = np.zeros(img_shape).astype('uint8')
 
@@ -140,7 +153,7 @@ class TranslateImage:
         labels = np.array([bounding_boxes[:, 0]]).reshape(-1, 1)
 
         bounding_boxes = clip_box(bounding_boxes[:, 1:5], [0, 0, img_shape[1],
-                                                   img_shape[0]], area_less)
+                                                           img_shape[0]], area_less)
 
         bounding_boxes = np.concatenate((labels[:len(bounding_boxes)],
                                          bounding_boxes[:, :4]), axis=1)
