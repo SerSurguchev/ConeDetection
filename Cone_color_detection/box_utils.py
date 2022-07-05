@@ -70,8 +70,11 @@ def draw_rect(im, cords, color=(0, 0, 0)):
         pt1, pt2 = (int(cord[1]), int(cord[2])), \
                    (int(cord[3]), int(cord[4]))
 
-        im = cv2.rectangle(im, pt1, pt2, color, 1)
+        cx = int((cord[1] + cord[3]) / 2)
 
+        cv2.rectangle(im, pt1, pt2, color, 1)
+        cv2.putText(im, str(int(cord[0])), (cx, int(cord[2] + 5)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
     return im
 
 
