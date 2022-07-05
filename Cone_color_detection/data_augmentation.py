@@ -45,7 +45,7 @@ class ScaleImage:
     """
     Scales the image
 
-    Bounding boxes which have an area of less than 25% in the remaining in the
+    Bounding boxes which have an area of less than 50% in the remaining in the
     transformed image is dropped. The resolution is maintained.
 
     :param scale_x: (float): The factor by which the image is scaled horizontally
@@ -58,7 +58,7 @@ class ScaleImage:
         self.scale_x = scale_x
         self.scale_y = scale_y
 
-    def __call__(self, image, bounding_boxes):
+    def __call__(self, image, bounding_boxes, area_less=0.5):
         """
         :param image: (ndarraay): Numpy image
         :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
@@ -76,7 +76,7 @@ class ScaleImage:
         image = cv2.resize(image, None, fx=resize_scale_x,
                            fy=resize_scale_y, interpolation=cv2.INTER_LINEAR)
 
-        bounding_boxes[:, :4] *= [resize_scale_x, resize_scale_y, resize_scale_x, resize_scale_y]
+        bounding_boxes[:, 1:5] *= [resize_scale_x, resize_scale_y, resize_scale_x, resize_scale_y]
 
         canvas = np.zeros(img_shape, dtype=np.uint8)
 
@@ -86,7 +86,63 @@ class ScaleImage:
         canvas[:y_lim, :x_lim] = image[:y_lim, :x_lim]
         image = canvas
 
-        bounding_boxes = clip_box(bounding_boxes, [0, 0, img_shape[1],
-                                                   img_shape[0]], 0.25)
+        labels = np.array([bounding_boxes[:, 0]]).reshape(-1, 1)
+
+        bounding_boxes = clip_box(bounding_boxes[:, 1:5], [0, 0, img_shape[1],
+                                                   img_shape[0]], area_less)
+
+        bounding_boxes = np.concatenate((labels[:len(bounding_boxes)],
+                                         bounding_boxes[:, :4]), axis=1)
+
+        return image, bounding_boxes
+
+
+class TranslateImage:
+    """
+    Randomly translate image
+    """
+
+    def __init__(self, translate_x=0.15, translate_y=0.15):
+        self.translate_x = translate_x
+        self.translate_y = translate_y
+
+        assert self.translate_x > 0 \
+               and self.translate_x < 1, 'Traslate factor must be between 0 and 1'
+
+        assert self.translate_y > 0 \
+               and self.translate_y < 1, 'Traslate factor must be between 0 and 1'
+
+    def __call__(self, image, bounding_boxes, area_less=0.5):
+        img_shape = image.shape
+
+        translate_factor_x = self.translate_x
+        translate_factor_y = self.translate_y
+
+        # Get the top-left corner co-ordinates of the shifted box
+        corner_x = int(img_shape[1] * translate_factor_x)
+        corner_y = int(img_shape[0] * translate_factor_y)
+
+        bounding_boxes[:, 1:5] += [corner_x, corner_y, corner_x, corner_y]
+
+        # Change the origin to the top-left corner of the translated box
+        box_cords = [max(0, corner_y), max(0, corner_x),
+                     min(img_shape[0], img_shape[0] + corner_y),
+                     min(img_shape[1], img_shape[1] + corner_x)]
+
+        mask = image[max(-corner_y, 0):min(img_shape[0], -corner_y + img_shape[0]),
+                     max(-corner_x, 0):min(img_shape[1], -corner_x + img_shape[1]), :]
+
+        canvas = np.zeros(img_shape).astype('uint8')
+
+        canvas[box_cords[0]:box_cords[2], box_cords[1]:box_cords[3], :] = mask
+        image = canvas
+
+        labels = np.array([bounding_boxes[:, 0]]).reshape(-1, 1)
+
+        bounding_boxes = clip_box(bounding_boxes[:, 1:5], [0, 0, img_shape[1],
+                                                   img_shape[0]], area_less)
+
+        bounding_boxes = np.concatenate((labels[:len(bounding_boxes)],
+                                         bounding_boxes[:, :4]), axis=1)
 
         return image, bounding_boxes
