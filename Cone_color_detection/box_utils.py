@@ -44,22 +44,13 @@ def pascal_voc_to_yolo(boxes, h_image, w_image):
     :param w_image: (int): Width of numpy image
     :return: Numpy array containing bounding boxes in yolo format
     """
+    orig_box = boxes.copy()
+    boxes[:, 1] = np.round(((orig_box[:, 1] + orig_box[:, 3]) / 2 / float(w_image)), 6)
+    boxes[:, 2] = np.round(((orig_box[:, 2] + orig_box[:, 4]) / 2 / float(h_image)), 6)
+    boxes[:, 3] = np.round((orig_box[:, 3] - orig_box[:, 1]) / float(w_image), 6)
+    boxes[:, 4] = np.round((orig_box[:, 4] - orig_box[:, 2]) / float(h_image), 6)
 
-    x_norm = np.round(((boxes[:, 0] + boxes[:, 2]) / 2 / float(w_image)), 6)
-    y_norm = np.round(((boxes[:, 1] + boxes[:, 3]) / 2 / float(h_image)), 6)
-    w_norm = np.round((boxes[:, 2] - boxes[:, 0]) / float(w_image), 6)
-    h_norm = np.round((boxes[:, 3] - boxes[:, 1]) / float(h_image), 6)
-
-    yolo_format = np.concatenate((boxes[:, 0],
-                                  x_norm,
-                                  y_norm,
-                                  w_norm,
-                                  h_norm))
-
-    yolo_format = yolo_format.reshape(5, len(boxes)).T
-    yolo_format[:, 0] = yolo_format[:, 0].astype(int)
-
-    return yolo_format
+    return boxes
 
 
 def draw_rect(im, cords, color=(0, 0, 0)):
