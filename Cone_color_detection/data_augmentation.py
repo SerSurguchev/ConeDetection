@@ -86,7 +86,7 @@ class ScaleImage:
         canvas[:y_lim, :x_lim] = image[:y_lim, :x_lim]
         image = canvas
 
-        bounding_boxes = clip_box(bounding_boxes, [0, 0, 1 + img_shape[1],
+        bounding_boxes = clip_box(bounding_boxes, [0, 0, img_shape[1],
                                                    img_shape[0]], 0.25)
 
         return image, bounding_boxes
