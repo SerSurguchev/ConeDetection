@@ -8,7 +8,7 @@ def yolo_to_pascal_voc(boxes, h_image, w_image):
     """
     Change bouning box annotaion from yolo format to pascal_voc format
     :param boxes: (ndarray): Numpy array containing bounding boxes are represented in the format
-     normalized [x_center, y_center, width, height]
+    normalized [x_center, y_center, width, height]
     :param h_image: (int): Height of numpy image
     :param w_image: (int): Width of numpy image
     :return: Numpy array containing bounding boxes in pascal_voc format [x_min, y_min, x_max, y_max]
@@ -19,19 +19,19 @@ def yolo_to_pascal_voc(boxes, h_image, w_image):
     if not isinstance(h_image, np.ndarray) and not isinstance(w_image, np.ndarray):
         h_image, w_image = map(np.array, [h_image, w_image])
 
-    center_x, center_y = np.round(abs(boxes[:, 2] * w_image)), \
-                         np.round(abs(boxes[:, 3] * h_image))
+    center_x, center_y = np.round(abs(boxes[:, 3] * w_image)), \
+                         np.round(abs(boxes[:, 4] * h_image))
 
-    boxes[:, 0] = np.round(orig_box[:, 0] * w_image - (center_x / 2))
-    boxes[:, 1] = np.round(orig_box[:, 1] * h_image - (center_y / 2))
+    boxes[:, 1] = np.round(orig_box[:, 1] * w_image - (center_x / 2))
+    boxes[:, 2] = np.round(orig_box[:, 2] * h_image - (center_y / 2))
 
-    boxes[:, 2] = np.round(orig_box[:, 0] * w_image + (center_x / 2))
-    boxes[:, 3] = np.round(orig_box[:, 1] * h_image + (center_y / 2))
+    boxes[:, 3] = np.round(orig_box[:, 1] * w_image + (center_x / 2))
+    boxes[:, 4] = np.round(orig_box[:, 2] * h_image + (center_y / 2))
 
     return boxes.astype(float)
 
 
-def pascal_voc_to_yolo(labels, boxes, h_image, w_image):
+def pascal_voc_to_yolo(boxes, h_image, w_image):
     """
     Change bouning box annotaion from pascal_voc
     to yolo normalized [x_center, y_center, width, height] format
@@ -50,7 +50,7 @@ def pascal_voc_to_yolo(labels, boxes, h_image, w_image):
     w_norm = np.round((boxes[:, 2] - boxes[:, 0]) / float(w_image), 6)
     h_norm = np.round((boxes[:, 3] - boxes[:, 1]) / float(h_image), 6)
 
-    yolo_format = np.concatenate((labels,
+    yolo_format = np.concatenate((boxes[:, 0],
                                   x_norm,
                                   y_norm,
                                   w_norm,
@@ -66,20 +66,18 @@ def draw_rect(im, cords, color=(0, 0, 0)):
     """
     Draw the rectangle on the image
 
-    :param image: (ndarraay): Numpy image
-    :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
+    :param im: (ndarraay): Numpy image
+    :param cords: (ndarray): Numpy array containing bounding boxes are represented in the
     format [x_min, y_min, x_max, y_max]
 
     :return (ndarray): Numpy image with bounding boxes drawn on it
     """
-    cords = cords[:, :4]
-    cords = cords.reshape(-1, 4)
+    cords = cords[:, :5]
+    cords = cords.reshape(-1, 5)
 
     for cord in cords:
-        pt1, pt2 = (cord[0], cord[1]), (cord[2], cord[3])
-
-        pt1 = int(pt1[0]), int(pt1[1])
-        pt2 = int(pt2[0]), int(pt2[1])
+        pt1, pt2 = (int(cord[1]), int(cord[2])), \
+                   (int(cord[3]), int(cord[4]))
 
         im = cv2.rectangle(im, pt1, pt2, color, 1)
 
