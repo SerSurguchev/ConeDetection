@@ -201,6 +201,8 @@ class ShearImage:
 
         image = cv2.warpAffine(image, matrix, (int(nW), image.shape[0]))
 
+        bounding_boxes = pascal_voc_to_yolo(bounding_boxes, h_image=image.shape[0], w_image=nW)
+
         return image, bounding_boxes
 
 
@@ -287,8 +289,8 @@ def main(images_path, output_dir):
             sheared_image, sheared_box = ShearImage(shear_factor=shear_factor)(img.copy(),
                                                                                pascal_voc_boxes.copy())
 
-            sheared_box = pascal_voc_to_yolo(sheared_box,
-                                             h_image=height, w_image=width)
+            # sheared_box = pascal_voc_to_yolo(sheared_box,
+            #                                  h_image=height, w_image=width)
 
             df_sheared_box = from_yolo_to_dataframe(sheared_box)
 
