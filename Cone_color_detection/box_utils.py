@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pandas as pd
 
 np.set_printoptions(suppress=True)
 
@@ -11,7 +12,7 @@ def yolo_to_pascal_voc(boxes, h_image, w_image):
     normalized [x_center, y_center, width, height]
     :param h_image: (int): Height of numpy image
     :param w_image: (int): Width of numpy image
-    :return: Numpy array containing bounding boxes in pascal_voc format [x_min, y_min, x_max, y_max]
+    :return: Numpy array containing bounding boxes in pascal_voc format [label, x_min, y_min, x_max, y_max]
     """
 
     orig_box = boxes.copy()
@@ -38,7 +39,7 @@ def pascal_voc_to_yolo(boxes, h_image, w_image):
 
     :param labels: (ndarray) Numpy array containing cone labels
     :param boxes: (ndarray): Numpy array containing bounding boxes are represented in the format
-    [x_min, y_min, x_max, y_max]
+    [label, x_min, y_min, x_max, y_max]
 
     :param h_image: (int): Height of numpy image
     :param w_image: (int): Width of numpy image
@@ -51,6 +52,24 @@ def pascal_voc_to_yolo(boxes, h_image, w_image):
     boxes[:, 4] = np.round((orig_box[:, 4] - orig_box[:, 2]) / float(h_image), 6)
 
     return boxes
+
+
+def from_yolo_to_dataframe(bounding_boxes):
+    """
+    Convert numpy array to dataframe and change first column (box labels)
+    from float64 to int8
+
+    :param bounding_boxes: (ndarray): Numpy array containing bounding boxes in
+    yolo normalized [label, x_center, y_center, width, height] format
+
+    :return: (dataframe): Dataframe containing bounding boxes in yolo normalized format
+    [label, x_center, y_center, width, height]
+    """
+
+    df = pd.DataFrame(bounding_boxes)
+    df[0] = df[0].astype(np.uint8)
+
+    return df
 
 
 def draw_rect(im, cords, color=(0, 0, 0)):
