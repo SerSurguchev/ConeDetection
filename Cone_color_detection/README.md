@@ -15,9 +15,13 @@
 1) Написать код по аугментации данных и пересчёта координат ограничивающих рамок.
 Сделано: 
 
-1.1) ![Horizontal flip](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L12)
+1.1) ![Horizontal flip](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L16)
 
-1.2) ![Image Scaling](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L44)
+1.2) ![Image Scaling](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L48)
+
+1.3) ![Image Translation](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L102)
+
+1.4) ![Image Shearing](https://github.com/SerSurguchev/ConeDetection/blob/main/Cone_color_detection/data_augmentation.py#L168)
 
 # Результаты 
 ![vid_37_frame_255](https://user-images.githubusercontent.com/71214107/177032350-b062fae3-ac8e-44e1-bb8d-92d0af469343.jpg)
