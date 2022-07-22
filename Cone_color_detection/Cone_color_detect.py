@@ -122,6 +122,10 @@ def remove_white_naive(triangle, threshold):
 
 
 def brightness_change(grad_array):
+    """
+    :param grad_array: (ndarray): Numpy array containing warped cone image
+    """
+
     increase, decrease = [], []
 
     for i in range(1, len(grad_array)):
@@ -134,6 +138,12 @@ def brightness_change(grad_array):
 
 
 def check_cone_gradient(orig_bitwise):
+    """
+    :param orig_bitwise: (ndarray): Numpy image containing cone rectangle with black pixels around the edges
+    :return: (boolean): True if cone with black color in middle (of if this is big cone) else False because
+    white color in middle
+    """
+
     gray = cv2.cvtColor(orig_bitwise, cv2.COLOR_BGR2GRAY)
     half = gray[round(gray.shape[0] / 2):, :]
     grad_array = np.zeros([half.shape[0]])
@@ -156,7 +166,7 @@ def get_color(triangle, fallen, possible_big_cone):
     :param triangle: (ndarray): Cone rectangle with black pixels around the edges
     :param fallen: (boolean): True if cone is fallen (box width greater than height)
     :param possible_big_cone: (boolean)
-    :return: (int): cone class
+    :return: (int): Cone class
     """
 
     half_b = triangle[round(triangle.shape[0] / 2):, :]
@@ -182,12 +192,13 @@ def get_color(triangle, fallen, possible_big_cone):
             return 2 if yr / yellow > 2 else 0
 
         elif possible_big_cone and \
-                yr / yellow > 5:
+                check_cone_gradient(orig_bitwise=triangle) and \
+                yr / yellow > 2:
             return 2
 
         # Detect big orange cone (second unknown class)
         elif check_cone_gradient(orig_bitwise=triangle) and \
-                (yellow / yr < 0.7 or yr / yellow > 3):
+                yellow / yr < 0.7:
             return 2
 
         # Detect yellow cone (zero class)
@@ -213,18 +224,26 @@ def main(data_fr_file, dir, output_dir):
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    for i in range(1, lens):
+    for i in range(1600, lens):
 
         j = 5
         name_of_image = data_fr_file.iloc[i, 0]
         image = cv2.imread(dir + name_of_image)
         c_height, c_width = image.shape[:2]
+
+        print(dir + name_of_image)
+
+        print('height: ', c_height, 'width: ', c_width)
+
+        kernel = np.array([[-1, -1, -1],
+                           [-1, 9, -1],
+                           [-1, -1, -1]])
+
+        # Applying the sharpening kernel
+        # image = cv2.filter2D(image, -1, kernel)
+
         name_of_file = name_of_image[:-3] + "txt"
-
-        img_center = np.array(image.shape[1]) / 2
-        img_center = np.hstack((img_center, img_center)).astype('uint8')
-
-        file1 = open(output_dir + 'gray_' + name_of_file, 'w')
+        # file1 = open(output_dir + 'gray_' + name_of_file, 'w')
 
         mask = pd.DataFrame(data_fr_file.iloc[i, j:]).dropna()
         bounding_boxes = []
@@ -266,7 +285,7 @@ def main(data_fr_file, dir, output_dir):
                 # Calculate cone brightness and if it is toо bright, pass this cone
                 avr_brightness = calc_brightness(Image.fromarray(cv2.cvtColor(cone, cv2.COLOR_BGR2RGB)))
 
-                if int(avr_brightness) < 180:
+                if int(avr_brightness) < 190:
 
                     x_norm = round((float(x) + float(w) / 2) / float(c_width), 6)
                     y_norm = round((float(y) + float(h) / 2) / float(c_height), 6)
@@ -287,6 +306,16 @@ def main(data_fr_file, dir, output_dir):
                             color_ind = 1
                         else:
                             color_ind = 2 if check_cone_gradient(triangle.copy()) else 1
+
+                    # Frame with this extensions doesn't include big red cone
+                    elif (c_height == 320 and c_width == 800) \
+                            or (c_height == 592 and c_width == 800):
+
+                        if w > h:
+                            color_ind = 1 if (np.sum(triangle[:, :, 2])
+                                              + np.sum(triangle[:, :, 1])) / 2 < np.sum(triangle[:, :, 0]) else 0
+                        else:
+                            color_ind = 0 if check_cone_gradient(triangle.copy()) else 1
 
                     else:
                         color_ind = get_color(triangle.copy(), fallen, possible_big_cone)
