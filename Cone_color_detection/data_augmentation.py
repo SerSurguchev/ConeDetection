@@ -197,7 +197,8 @@ class ShearImage:
         nW = image.shape[1] \
              + abs(shear_factor * image.shape[0])
 
-        bounding_boxes[:, [1, 3]] += ((bounding_boxes[:, [2, 4]]) * np.abs(shear_factor)).astype(int)
+        bounding_boxes[:, [1, 3]] += ((bounding_boxes[:, [2, 4]])
+                                      * np.abs(shear_factor)).astype(int)
 
         image = cv2.warpAffine(image, matrix, (int(nW), image.shape[0]))
 
@@ -222,10 +223,13 @@ def main(images_path, output_dir):
         img = cv2.imread(image_path)
         height, width = img.shape[:2]
 
-        path_to_im, im_name = split(image_path, '/', 7)
+        path_to_im, im_name = split(image_path, '/', 
+                                    image_path.count('/'))
 
         txt_file = image_path.split('.')[0] + '.txt'
-        path_to_txt, txt_name = split(txt_file, '/', 7)
+        
+        path_to_txt, txt_name = split(txt_file, '/', 
+                                      txt_file.count('/'))
 
         boxes = np.loadtxt(txt_file, dtype=np.float64)
 
