@@ -49,7 +49,7 @@ class ScaleImage:
     """
     Image scaling
 
-    Bounding boxes which have an area of less than 50% in the remaining in the
+    Bounding boxes which have an area of less than 70% in the remaining in the
     transformed image is dropped. The resolution is maintained.
 
     :param scale_x: (float): The factor by which the image is scaled horizontally
@@ -60,7 +60,7 @@ class ScaleImage:
         self.scale_x = scale_x
         self.scale_y = scale_y
 
-    def __call__(self, image, bounding_boxes, area_less=0.5):
+    def __call__(self, image, bounding_boxes, area_less=0.7):
         """
         :param image: (ndarraay): Numpy image
         :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
@@ -103,7 +103,7 @@ class TranslateImage:
     """
     Translate image
 
-    Bounding boxes which have an area of less than 50% in the remaining in the
+    Bounding boxes which have an area of less than 70% in the remaining in the
     transformed image is dropped. The resolution is maintained.
 
     :param scale_x: (float): The factor by which the image is translated horizontally
@@ -120,7 +120,7 @@ class TranslateImage:
         assert self.translate_y > 0 \
                and self.translate_y < 1, 'Traslate factor must be between 0 and 1'
 
-    def __call__(self, image, bounding_boxes, area_less=0.5):
+    def __call__(self, image, bounding_boxes, area_less=0.7):
         """
         :param image: (ndarraay): Numpy image
         :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
@@ -176,11 +176,11 @@ class ShearImage:
 
     def __call__(self, image, bounding_boxes):
         """
-        :param image: (ndarraay): Numpy image
-        :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
+        :param image (ndarraay): Numpy image
+        :param bounding_boxes (ndarray): Numpy array containing bounding boxes are represented in the
         format [label, x_min, y_min, x_max, y_max]
 
-        returns: (ndarray): Scaled image in the numpy format
+        returns (ndarray): Scaled image in the numpy format
         (ndarray): Transfromed number of bounding boxes and 5 represents [label, x_min, y_min, x_max, y_max] of the box
         """
 
@@ -207,6 +207,42 @@ class ShearImage:
         return image, bounding_boxes
 
 
+class Sequence:
+    """
+    Apply sequence of transformations to the image/boxes
+
+    Parameters:
+    :param sequence_lst (list): List containing transformations objects in sequence they are applied
+    :param probability (list or int): Probability with each of the transformation will be applied
+    """
+
+    def __init__(self, sequence_lst, probability=0.5):
+        self.sequence_lst = sequence_lst
+        self.probability = probability
+
+    def __call__(self, image, bounding_boxes):
+        """
+        Parameters:
+        :param image: (ndarraay): Numpy image
+        :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
+        format [label, x_min, y_min, x_max, y_max]
+
+        returns: (ndarray): Scaled image in the numpy format
+        (ndarray): Transfromed number of bounding boxes and 5 represents [label, x_min, y_min, x_max, y_max] of the box
+        """
+
+        for i, aug in enumerate(self.sequence_lst):
+            if isinstance(self.probability, tuple):
+                prob = self.probability[i]
+            else:
+                prob = self.probability
+
+            if np.random.rand() < prob:
+                image, bounding_boxes = aug(image, bounding_boxes)
+
+        return image, bounding_boxes
+
+
 def split(strng, sep, pos):
     strng = strng.split(sep)
     return sep.join(strng[:pos]), sep.join(strng[pos:])
@@ -223,12 +259,12 @@ def main(images_path, output_dir):
         img = cv2.imread(image_path)
         height, width = img.shape[:2]
 
-        path_to_im, im_name = split(image_path, '/', 
+        path_to_im, im_name = split(image_path, '/',
                                     image_path.count('/'))
 
         txt_file = image_path.split('.')[0] + '.txt'
-        
-        path_to_txt, txt_name = split(txt_file, '/', 
+
+        path_to_txt, txt_name = split(txt_file, '/',
                                       txt_file.count('/'))
 
         boxes = np.loadtxt(txt_file, dtype=np.float64)
