@@ -42,7 +42,10 @@ class Horizontalflip:
         bounding_boxes[:, 1] = bounding_boxes[:, 1] - box_w
         bounding_boxes[:, 3] = bounding_boxes[:, 3] + box_w
 
-        return image, bounding_boxes
+        return image, \
+               pascal_voc_to_yolo(bounding_boxes.copy(),
+                                  h_image=image.shape[0],
+                                  w_image=image.shape[1])
 
 
 class ScaleImage:
@@ -60,7 +63,7 @@ class ScaleImage:
         self.scale_x = scale_x
         self.scale_y = scale_y
 
-    def __call__(self, image, bounding_boxes, area_less=0.7):
+    def __call__(self, image, bounding_boxes, area_less=0.5):
         """
         :param image: (ndarraay): Numpy image
         :param bounding_boxes: (ndarray): Numpy array containing bounding boxes are represented in the
@@ -96,7 +99,9 @@ class ScaleImage:
         bounding_boxes = np.concatenate((labels[:len(bounding_boxes)],
                                          bounding_boxes[:, :4]), axis=1)
 
-        return image, bounding_boxes
+        return image, pascal_voc_to_yolo(bounding_boxes.copy(),
+                                         h_image=img_shape[0],
+                                         w_image=img_shape[1])
 
 
 class TranslateImage:
@@ -115,10 +120,10 @@ class TranslateImage:
         self.translate_y = translate_y
 
         assert self.translate_x > 0 \
-               and self.translate_x < 1, 'Traslate factor must be between 0 and 1'
+               and self.translate_x < 1, 'Translate factor must be between 0 and 1'
 
         assert self.translate_y > 0 \
-               and self.translate_y < 1, 'Traslate factor must be between 0 and 1'
+               and self.translate_y < 1, 'Translate factor must be between 0 and 1'
 
     def __call__(self, image, bounding_boxes, area_less=0.7):
         """
@@ -162,7 +167,9 @@ class TranslateImage:
         bounding_boxes = np.concatenate((labels[:len(bounding_boxes)],
                                          bounding_boxes[:, :4]), axis=1)
 
-        return image, bounding_boxes
+        return image, pascal_voc_to_yolo(bounding_boxes.copy(),
+                                         h_image=img_shape[0],
+                                         w_image=img_shape[1])
 
 
 class ShearImage:
@@ -202,9 +209,9 @@ class ShearImage:
 
         image = cv2.warpAffine(image, matrix, (int(nW), image.shape[0]))
 
-        bounding_boxes = pascal_voc_to_yolo(bounding_boxes, h_image=image.shape[0], w_image=nW)
-
-        return image, bounding_boxes
+        return image, pascal_voc_to_yolo(bounding_boxes,
+                                         h_image=image.shape[0],
+                                         w_image=nW)
 
 
 class Sequence:
@@ -241,131 +248,3 @@ class Sequence:
                 image, bounding_boxes = aug(image, bounding_boxes)
 
         return image, bounding_boxes
-
-
-def split(strng, sep, pos):
-    strng = strng.split(sep)
-    return sep.join(strng[:pos]), sep.join(strng[pos:])
-
-
-def main(images_path, output_dir):
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
-
-    for image_path in glob.glob(images_path + '*.jpg'):
-
-        print(image_path)
-
-        img = cv2.imread(image_path)
-        height, width = img.shape[:2]
-
-        path_to_im, im_name = split(image_path, '/',
-                                    image_path.count('/'))
-
-        txt_file = image_path.split('.')[0] + '.txt'
-
-        path_to_txt, txt_name = split(txt_file, '/',
-                                      txt_file.count('/'))
-
-        boxes = np.loadtxt(txt_file, dtype=np.float64)
-
-        if len(boxes.shape) == 1:
-            boxes = np.array([boxes], dtype=np.float64)
-
-        pascal_voc_boxes = yolo_to_pascal_voc(boxes.copy(), height, width)
-        pascal_voc_boxes = pascal_voc_boxes[pascal_voc_boxes[:, 4].argsort()]
-
-        # -----------------------------------------------------------------------
-        # Scale image by various factor
-        for scale_x, scale_y in np.array([
-            [-0.15, -0.15],
-            [-0.1, -0.1],
-            [0.1, 0.1],
-            [0.15, 0.15],
-            [0.2, 0.2]
-        ]):
-            scaled_img, scaled_boxes = ScaleImage(scale_x=scale_x,
-                                                  scale_y=scale_y)(img.copy(),
-                                                                   pascal_voc_boxes.copy())
-
-            scaled_boxes = pascal_voc_to_yolo(scaled_boxes,
-                                              h_image=height, w_image=width)
-            df_scaled_boxes = from_yolo_to_dataframe(scaled_boxes)
-
-            # Save scaled images and their labels
-            cv2.imwrite(f'{output_dir}/scaled_to_{scale_x}_{im_name}',
-                        cv2.cvtColor(scaled_img, cv2.COLOR_BGR2GRAY))
-
-            with open(f'{output_dir}/scaled_to_{scale_x}_{txt_name}', 'a') as f:
-                df_as_string = df_scaled_boxes.to_string(header=False, index=False)
-                f.write(df_as_string)
-
-        # -----------------------------------------------------------------------
-        # Translate image by various factor
-        for translate_x, translate_y in np.array([
-            [0.1, 0.1],
-            [0.15, 0.15],
-            [0.2, 0.2]
-        ]):
-            translated_img, translated_box = TranslateImage(translate_x=translate_x,
-                                                            translate_y=translate_y)(img.copy(),
-                                                                                     pascal_voc_boxes.copy())
-
-            translated_box = pascal_voc_to_yolo(translated_box,
-                                                h_image=height, w_image=width)
-            df_translated_box = from_yolo_to_dataframe(translated_box)
-
-            # Save translated images and their labels
-            cv2.imwrite(f'{output_dir}/translated_to_{translate_x}_{im_name}',
-                        cv2.cvtColor(translated_img, cv2.COLOR_BGR2GRAY))
-
-            with open(f'{output_dir}/translated_to_{translate_x}_{txt_name}', 'a') as f:
-                df_as_string = df_translated_box.to_string(header=False, index=False)
-                f.write(df_as_string)
-
-        # -----------------------------------------------------------------------
-        # Shear image by various factor
-        for shear_factor in np.array([-0.2, -0.15, -0.1, 0.1, 0.15, 0.2]):
-            sheared_image, sheared_box = ShearImage(shear_factor=shear_factor)(img.copy(),
-                                                                               pascal_voc_boxes.copy())
-
-            # sheared_box = pascal_voc_to_yolo(sheared_box,
-            #                                  h_image=height, w_image=width)
-
-            df_sheared_box = from_yolo_to_dataframe(sheared_box)
-
-            # Save translated images and their labels
-            cv2.imwrite(f'{output_dir}/sheared_to_{shear_factor}_{im_name}',
-                        cv2.cvtColor(sheared_image, cv2.COLOR_BGR2GRAY))
-
-            with open(f'{output_dir}/sheared_to_{shear_factor}_{txt_name}', 'a') as f:
-                df_as_string = df_sheared_box.to_string(header=False, index=False)
-                f.write(df_as_string)
-
-        # -----------------------------------------------------------------------
-        # Flip image
-        flipped_image, flipped_boxes = Horizontalflip()(img.copy(), pascal_voc_boxes.copy())
-
-        flipped_boxes = pascal_voc_to_yolo(flipped_boxes,
-                                           h_image=height,
-                                           w_image=width)
-
-        df_flipped_boxes = from_yolo_to_dataframe(flipped_boxes)
-
-        # Save flipped image and labels
-        cv2.imwrite(f'{output_dir}/flipped_{im_name}',
-                    cv2.cvtColor(flipped_image, cv2.COLOR_BGR2GRAY))
-
-        with open(f'{output_dir}/flipped_{txt_name}', 'a') as f:
-            df_as_string = df_flipped_boxes.to_string(header=False, index=False)
-            f.write(df_as_string)
-
-        # Final save original image as grayscale
-        cv2.imwrite(output_dir + '/' + im_name, cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
-        shutil.copy2(txt_file, output_dir + '/' + txt_name)
-
-
-if __name__ == '__main__':
-    images_path = '/home/sergey/from_wind/programming/Computer_vision/correct_labels/'
-    output_dir = '/home/sergey/from_wind/programming/Computer_vision/correct_labels_final'
-    main(images_path=images_path, output_dir=output_dir)
